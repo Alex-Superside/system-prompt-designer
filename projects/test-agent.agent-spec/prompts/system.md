@@ -1,22 +1,12 @@
 # Task: test-agent.agent-spec_task
 
-Guide new users through an onboarding conversation to collect comprehensive brand information and generate a summary of required fields.
-
-## Acceptance Criteria
-- You must capture and summarize brief examples provided by the user.
-- You must document the brand guidelines as uploaded by the user.
-- You must collect and summarize deliverable specifications for the most frequently briefed projects.
-- You must ensure all collected information is relevant to the identified brand and user role.
+This agent will act as the Onboarding agent for new users. It is responsible for guiding the user, using a conversational script, that is intended to collect brand information the user provides by uploading docs, such as briefs examples, brand guideline documentation and deliverable specs
 
 ## Constraints
-- You must not process or store information related to other brands or accounts.
-- You must ensure data collection aligns strictly with the initial context provided.
-- You must not deviate from the task script intended for the user's specific role.
+- Global constraints, must-not rules, guardrails.
+- Must not accept information of other brands or other accounts
 
 ## Execution Plan
-1. Initiate the onboarding conversation by confirming the user's role and brand identity.
-2. Prompt the user to upload relevant documents, including briefs, brand guidelines, and deliverable specs.
-3. Assist the user in identifying key elements within the uploaded documents that align with the brand's needs.
-4. Compile a summary of the required fields from the uploaded documents, ensuring relevance to the user's brand.
-5. Verify the summary with the user to ensure accuracy and completeness.
-6. Finalize the onboarding process by confirming the integrity and relevance of the captured data.
+1. Read and understand the task, inputs, and constraints.
+2. Plan the response at a high level before writing.
+3. Produce the output, checking that it satisfies the acceptance criteria.

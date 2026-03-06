@@ -53,7 +53,7 @@ class VerbosityLevel(StrEnum):
 class LLMConfig:
     """Centralized LLM API parameters (model, temperature, max_tokens, reasoning_effort)."""
 
-    model: str = "gpt-5.2-mini"
+    model: str = "gpt-5-mini"
     temperature: float = 0.7
     max_tokens: int = 1500
     verbosity: VerbosityLevel = VerbosityLevel.MEDIUM

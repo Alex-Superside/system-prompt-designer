@@ -62,7 +62,7 @@ promptctl design projects/my-analyst/specs/my-analyst.agent-spec.md --tier 2
 
 **Optional flags:**
 - `--tier [1|2|3]` — Override auto tier selection
-- `--model [gpt-5.2-mini|gpt-5.4|gpt-5.4-pro|gpt-5-mini|gpt-4o]` — LLM to use (default: gpt-5.2-mini)
+- `--model [gpt-5-mini|gpt-5.4|gpt-5.4-pro|gpt-4o]` — LLM to use (default: gpt-5-mini)
 - `--verbosity [low|medium|high]` — Reasoning effort for gpt-5.x models (default: medium)
 - `--verbose` — Show the prompt sent to OpenAI
 
@@ -77,7 +77,7 @@ promptctl run my-analyst --message "What are the top 3 risks in Q1 financials?"
 ```
 
 **Optional flags:**
-- `--model [gpt-5.2-mini|gpt-5.4|gpt-5.4-pro|gpt-5-mini|gpt-4o]` — LLM to use (default: gpt-5.2-mini)
+- `--model [gpt-5-mini|gpt-5.4|gpt-5.4-pro|gpt-4o]` — LLM to use (default: gpt-5-mini)
 - `--verbosity [low|medium|high]` — Reasoning effort for gpt-5.x models (default: medium)
 
 ### 4. `promptctl refine <identifier> --feedback "feedback text"`
@@ -97,7 +97,7 @@ promptctl refine my-analyst --feedback "Add a JSON schema section for the output
 ```
 
 **Optional flags:**
-- `--model [gpt-5.2-mini|gpt-5.4|gpt-5.4-pro|gpt-5-mini|gpt-4o]` — LLM to use (default: gpt-5.2-mini)
+- `--model [gpt-5-mini|gpt-5.4|gpt-5.4-pro|gpt-4o]` — LLM to use (default: gpt-5-mini)
 - `--verbosity [low|medium|high]` — Reasoning effort for gpt-5.x models (default: medium)
 - `--verbose` — Show the refinement prompt sent to OpenAI
 
@@ -115,9 +115,9 @@ promptctl evaluate my-analyst --scenarios tests/analyst-scenarios.md
 
 ## Model and Verbosity Control
 
-### Default: GPT-5.2-mini
+### Default: GPT-5-mini
 
-All LLM-powered commands now default to **gpt-5.2-mini** for cost-efficient reasoning.
+All LLM-powered commands now default to **gpt-5-mini** for cost-efficient reasoning.
 
 ### Model Override
 
@@ -126,7 +126,7 @@ Use `--model` to select a different LLM:
 ```bash
 promptctl design spec.md --model gpt-4o               # Use gpt-4o
 promptctl run my-agent --message "test" --model gpt-5.4-pro   # Use gpt-5.4-pro
-promptctl design spec.md --model gpt-5.2-mini          # Explicitly use the default
+promptctl design spec.md --model gpt-5-mini            # Explicitly use the default
 ```
 
 ### Reasoning Effort (GPT-5.x Only)

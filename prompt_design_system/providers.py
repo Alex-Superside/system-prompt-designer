@@ -32,6 +32,15 @@ class OpenAIProvider:
     stays in the caller (DesignAgent) so that this class has no awareness of
     domain concepts.
 
+    Common model names (as of March 2026):
+        gpt-5-mini      — default; cost-efficient reasoning with gpt-5 quality
+        gpt-5.4         — full gpt-5 reasoning model
+        gpt-5.4-pro     — professional variant with enhanced capacity
+        gpt-4o          — previous generation; no reasoning_effort support
+
+    A ``NotFoundError`` from OpenAI most often means the model name is wrong
+    or your account does not have access to that model tier.
+
     Usage::
 
         provider = OpenAIProvider()          # reads OPENAI_API_KEY from env

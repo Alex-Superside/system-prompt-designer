@@ -40,9 +40,9 @@ class TestUsageMetadata:
 
 class TestOpenAIProviderInit:
     def test_default_model(self):
-        """Default model is gpt-5.2-mini."""
+        """Default model is gpt-5-mini."""
         provider = OpenAIProvider(api_key="sk-test")
-        assert provider.model == "gpt-5.2-mini"
+        assert provider.model == "gpt-5-mini"
 
     def test_custom_model(self):
         """A custom model name is stored and used."""

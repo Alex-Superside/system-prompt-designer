@@ -14,7 +14,7 @@ Phase 1 of the GPT-5.4 migration introduces model selection, reasoning effort co
 
 | Component | Change | Impact |
 |-----------|--------|--------|
-| **Default Model** | `gpt-4o` → `gpt-5.2-mini` | Faster, cheaper reasoning |
+| **Default Model** | `gpt-4o` → `gpt-5-mini` | Faster, cheaper reasoning |
 | **Default Max Tokens** | 2000 → 1500 | 25% token reduction for gpt-5.x |
 | **New Feature: Reasoning Effort** | Added `--verbosity [low\|medium\|high]` | Control model depth for gpt-5.x |
 | **New Feature: Model Override** | Added `--model <name>` flag | Support gpt-5.4-pro, gpt-5-mini, etc. |
@@ -87,7 +87,7 @@ OPENAI_MAX_TOKENS=2000
 **Load Order:**
 1. Command-line flags (highest priority)
 2. Environment variables
-3. Hardcoded defaults (gpt-5.2-mini, medium, 1500 tokens)
+3. Hardcoded defaults (gpt-5-mini, medium, 1500 tokens)
 
 ---
 
@@ -97,7 +97,7 @@ OPENAI_MAX_TOKENS=2000
 
 | Model | Max Tokens | Notes |
 |-------|-----------|-------|
-| gpt-5.2-mini | 1500 | Default; cost-efficient reasoning |
+| gpt-5-mini | 1500 | Default; cost-efficient reasoning |
 | gpt-5.4 | 1500 | Optimized for reasoning |
 | gpt-5.4-pro | 1500 | Higher capacity variant |
 | gpt-5-mini | 1500 | Lightweight variant |
@@ -159,7 +159,7 @@ echo "OPENAI_MODEL=gpt-4o" >> .env
 
 **`prompt_design_system/config.py`**
 - Added `VerbosityLevel` enum (`LOW`, `MEDIUM`, `HIGH`)
-- Updated `LLMConfig` defaults: model → gpt-5.2-mini, max_tokens → 1500
+- Updated `LLMConfig` defaults: model → gpt-5-mini, max_tokens → 1500
 - Added `verbosity` field to `LLMConfig`
 - Added `get_max_tokens_for_model()` helper for model-specific defaults
 - Enhanced `from_env()` to load verbosity and auto-select max_tokens
@@ -222,7 +222,7 @@ echo "OPENAI_MODEL=gpt-4o" >> .env
 
 ### Key Test Cases
 
-✅ Default model is gpt-5.2-mini
+✅ Default model is gpt-5-mini
 ✅ Reasoning effort passed only for gpt-5.x models
 ✅ Reasoning effort omitted for gpt-4.x models
 ✅ Model-specific token limits auto-selected

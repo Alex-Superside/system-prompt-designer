@@ -566,9 +566,19 @@ def _resolve_llm_client(
     reason, how-to-fix) so the user knows exactly why the LLM was skipped and
     what to do about it.  Pass ``verbose=True`` to also print which config
     sources were checked.
+
+    Model and verbosity preferences are always resolved from config and CLI
+    flags regardless of whether the API key is present. This means the correct
+    model name is available in log messages and error context even when running
+    in heuristic mode.
     """
     if not use_llm:
         return None
+
+    # Resolve LLMConfig from environment first so model/verbosity preferences
+    # are available for error messages even when the API key is absent.
+    config = AppConfig.from_cwd()
+    llm_config = config.llm if config.llm is not None else LLMConfig.from_env()
 
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
@@ -585,8 +595,6 @@ def _resolve_llm_client(
         )
         return None
 
-    config = AppConfig.from_cwd()
-    llm_config = config.llm if config.llm is not None else LLMConfig.from_env()
     return OpenAIProvider(
         api_key=api_key,
         model=model,

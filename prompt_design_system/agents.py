@@ -379,10 +379,15 @@ class DesignAgent:
 
         client = self.llm_client
         assert client is not None
+        model_name = getattr(client, "model", "<unknown>")
         try:
             raw_response = client.generate(prompt)
         except RuntimeError as exc:
-            logger.warning("LLM call failed; returning heuristic design. Reason: %s", exc)
+            logger.warning(
+                "LLM call failed on model '%s'; returning heuristic design. Reason: %s",
+                model_name,
+                exc,
+            )
             return design
 
         enriched_task, suggested_steps = _parse_llm_task_enrichment(
@@ -425,10 +430,15 @@ class DesignAgent:
 
         client = self.llm_client
         assert client is not None
+        model_name = getattr(client, "model", "<unknown>")
         try:
             raw_response = client.generate(prompt)
         except RuntimeError as exc:
-            logger.warning("LLM refinement call failed; returning original design. Reason: %s", exc)
+            logger.warning(
+                "LLM refinement call failed on model '%s'; returning original design. Reason: %s",
+                model_name,
+                exc,
+            )
             return design
 
         enriched_task, suggested_steps = _parse_llm_task_enrichment(
@@ -639,14 +649,19 @@ class LinguisticAuditorAgent:
         prompt = _build_audit_llm_prompt(design, self.template_loader)
         _print_verbose_prompt(self.verbose, "AUDIT PROMPT SENT TO LLM", prompt)
 
+        model_name = getattr(self.llm_client, "model", "<unknown>")
         try:
             raw_response = self.llm_client.generate(prompt)
         except RuntimeError as exc:
-            logger.warning("LLM audit call failed. Reason: %s", exc)
+            logger.warning(
+                "LLM audit call failed on model '%s'. Reason: %s",
+                model_name,
+                exc,
+            )
             return LinguisticAuditReport(
                 design_identifier=design.agent_spec.identifier,
                 density_score=1,
                 orthogonality_score=1,
-                summary=f"Audit failed: {exc}",
+                summary=f"Audit failed (model: {model_name}): {exc}",
             )
         return _parse_llm_audit_report(raw_response, design.agent_spec.identifier)

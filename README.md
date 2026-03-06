@@ -247,16 +247,16 @@ See CLAUDE.md for full architecture details.
 
 ## Model and Verbosity Control
 
-### Default Model (GPT-5.2-mini)
+### Default Model (GPT-5-mini)
 
-The workbench now defaults to **gpt-5.2-mini**, with support for reasoning effort levels:
+The workbench defaults to **gpt-5-mini**, with support for reasoning effort levels:
 
 ```bash
-# Design with default gpt-5.2-mini at medium verbosity
+# Design with default gpt-5-mini at medium verbosity
 promptctl design spec.md
 
-# Use gpt-5.2-mini with high reasoning effort
-promptctl design spec.md --model gpt-5.2-mini --verbosity high
+# Use gpt-5-mini with high reasoning effort
+promptctl design spec.md --model gpt-5-mini --verbosity high
 
 # Fall back to gpt-4o
 promptctl design spec.md --model gpt-4o
@@ -267,10 +267,9 @@ promptctl run my-agent --message "test" --model gpt-5.4-pro --verbosity low
 
 ### Supported Models
 
-- **gpt-5.2-mini** (default) — Lightweight, optimized for cost-efficient reasoning
+- **gpt-5-mini** (default) — Lightweight, optimized for cost-efficient reasoning
 - **gpt-5.4** — Latest full model, optimized for reasoning
 - **gpt-5.4-pro** — Professional variant with enhanced capabilities
-- **gpt-5-mini** — Lightweight variant
 - **gpt-4o** — Previous generation (fallback compatible)
 
 ### Reasoning Effort Levels (GPT-5.x only)

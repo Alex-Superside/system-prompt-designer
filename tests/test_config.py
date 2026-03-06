@@ -50,10 +50,10 @@ class TestVerbosityLevel:
 class TestLLMConfigDefaults:
     """Test LLMConfig default values and initialization."""
 
-    def test_default_model_is_gpt52_mini(self):
-        """Default model is gpt-5.2-mini."""
+    def test_default_model_is_gpt5_mini(self):
+        """Default model is gpt-5-mini."""
         config = LLMConfig()
-        assert config.model == "gpt-5.2-mini"
+        assert config.model == "gpt-5-mini"
 
     def test_default_temperature(self):
         """Default temperature is 0.7."""
@@ -61,7 +61,7 @@ class TestLLMConfigDefaults:
         assert config.temperature == 0.7
 
     def test_default_max_tokens_is_1500(self):
-        """Default max_tokens is 1500 (reduced from 2000 for gpt-5.2-mini)."""
+        """Default max_tokens is 1500 (reduced from 2000 for gpt-5-mini)."""
         config = LLMConfig()
         assert config.max_tokens == 1500
 
@@ -144,7 +144,7 @@ class TestLLMConfigFromEnv:
 
         config = LLMConfig.from_env()
 
-        assert config.model == "gpt-5.2-mini"
+        assert config.model == "gpt-5-mini"
         assert config.temperature == 0.7
         assert config.max_tokens == 1500
         assert config.verbosity == VerbosityLevel.MEDIUM
