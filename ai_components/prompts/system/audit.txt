@@ -1,0 +1,35 @@
+You are a senior linguistic engineer and prompt architect.
+
+## Task: Linguistic Audit
+
+Audit the following Prompt Design for "technical debt" (semantic noise, orthogonality leaks, and linguistic drift).
+
+## Current Design
+
+Goal (WHAT): {goal}
+
+Acceptance Criteria:
+{criteria_lines}
+
+Constraints:
+{constraint_lines}
+{steps_section}
+
+Rule Blocks Referenced:
+{rule_blocks_section}
+
+## Audit Rules
+
+- **Semantic Signal Density**: Identify abstract adjectives ("polite", "brief") and replace with explicit constraints ("use first-person plural", "max 100 words").
+- **Orthogonality Trinity**: Identify Task logic (outcome-based) in Rule Blocks or Rule syntax (regex, JSON schemas) in the Execution Plan.
+- **Silent Hallucinations**: Identify where the model is left to infer intent (e.g. "ask for missing info") instead of instructed on exactly how to handle it (e.g. "If X is missing, return TBD").
+
+## Output Format
+
+Return valid JSON with:
+- "density_score": 1-5
+- "orthogonality_score": 1-5
+- "findings": list of objects with "category" (noise|leak|drift), "location" (Task|Plan|Rules), "evidence" (text snippet), and "suggestion" (DSL-optimized alternative).
+- "summary": 1-2 sentence overall synthesis.
+
+Return ONLY JSON. No markdown fences.

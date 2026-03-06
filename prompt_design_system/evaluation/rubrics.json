@@ -1,0 +1,449 @@
+{
+  "evaluation_rubrics": [
+    {
+      "id": "brief_agent_structural_and_rule_compliance",
+      "name": "Brief Agent Structural & Rule Compliance",
+      "description": "Evaluates whether a brief-writing agent\u2019s output complies with Task acceptance criteria, Execution Plan validations, and Rule Blocks for structure, citations, markup, and guardrails.",
+      "dimensions": [
+        {
+          "id": "structure_compliance",
+          "label": "Brief Structure Compliance",
+          "description": "Does the output follow the required BRIEF/SCOPE section structure and include all mandatory subsections with correct hierarchy and ordering?",
+          "signals_positive": [
+            "All required sections (Problem Overview, Brand/Customer & Project Context, Target Audience, Creative Guidance, Deliverables, Volume, Timeline, Technical Specifications, Out of Scope, Account resource files) are present and properly labeled.",
+            "Section hierarchy matches the defined brief_html_structure_rules (no reordering or merging of sections)."
+          ],
+          "signals_negative": [
+            "Missing one or more required sections or subsections.",
+            "Sections merged or renamed in ways that break mapping to the structure schema.",
+            "Out-of-contract content (e.g. extra top-level sections) without clear justification."
+          ],
+          "scale": {
+            "type": "integer",
+            "min": 1,
+            "max": 5,
+            "anchor_examples": {
+              "1": "Major structural violations; brief cannot be reliably parsed.",
+              "3": "Minor structural deviations but overall shape recognizable.",
+              "5": "Fully compliant with structure schema; no deviations."
+            }
+          }
+        },
+        {
+          "id": "guardrail_compliance",
+          "label": "Brand Guardrail Compliance",
+          "description": "Did the agent correctly enforce brand/account guardrails, rejecting out-of-scope requests and not mixing brands or topics?",
+          "signals_positive": [
+            "For in-scope requests, brief content refers only to the target {{company_name}}.",
+            "For out-of-scope requests, agent returns the standard rejection message and does not process further.",
+            "No references to other brands or accounts when guardrail forbids it."
+          ],
+          "signals_negative": [
+            "Agent generates a brief for a different brand than specified in guardrails.",
+            "Agent partially processes an out-of-scope request before rejecting.",
+            "Soft rejections that offer generic help in violation of hard-guardrail rules."
+          ],
+          "scale": {
+            "type": "integer",
+            "min": 1,
+            "max": 5
+          }
+        },
+        {
+          "id": "citation_compliance",
+          "label": "Citation Formatting & Provenance",
+          "description": "Checks adherence to citation_formatting_rules, context_source_mapping_rules, citation_numbering_rules, and citation_metadata_rules.",
+          "signals_positive": [
+            "Every factual statement derived from Supporting Data or the initial prompt has at least one properly-formed mark + sup pair.",
+            "Citations are sequentially numbered, with consistent data-citation-id links between marks and superscripts.",
+            "data-id/data-type/data-title/data-reasoning attributes are present and correctly reflect their sources.",
+            "Categories in any footer or summary section match the mapping defined in context_source_mapping_rules."
+          ],
+          "signals_negative": [
+            "Missing citations for factual statements clearly derived from Supporting Data.",
+            "Non-sequential or duplicated citation numbering.",
+            "Missing or malformed metadata attributes (e.g. no data-reasoning, wrong data-type).",
+            "Incorrect mapping of Supporting Data sections to categories (e.g. mapping a tone section to Recurrent Projects)."
+          ],
+          "scale": {
+            "type": "integer",
+            "min": 1,
+            "max": 5
+          }
+        },
+        {
+          "id": "highlight_and_markup_compliance",
+          "label": "Highlight & Markup Compliance",
+          "description": "Assesses whether gaps and uncertainties are correctly marked and markup_system_rules / highlight_formatting_rules are respected.",
+          "signals_positive": [
+            "All missing or ambiguous fields are marked with <mark class=\"highlight\" data-type=\"gap\">\u2026</mark> or equivalent.",
+            "No inline styles or Markdown ==...== syntax are used; only semantic HTML mark tags.",
+            "Citation and gap marks do not overlap or reuse conflicting data-type values."
+          ],
+          "signals_negative": [
+            "Known gaps in the input are not highlighted.",
+            "Multiple data-type values on a single mark or nested marks of different types.",
+            "Use of spans, inline styles, or markdown highlighting instead of mark tags."
+          ],
+          "scale": {
+            "type": "integer",
+            "min": 1,
+            "max": 5
+          }
+        },
+        {
+          "id": "schema_and_allowed_tags_compliance",
+          "label": "Schema & Allowed Tags Compliance",
+          "description": "Evaluates whether only the allowed HTML tags and structures defined in brief_allowed_html_tags_rules are used and the output is syntactically valid.",
+          "signals_positive": [
+            "Only allowed tags (h1\u2013h3, p, ul, li, mark, sup, br, hr) appear in the output.",
+            "HTML parses cleanly and nesting is well-formed.",
+            "No stray Markdown, scripts, or unsupported elements."
+          ],
+          "signals_negative": [
+            "Presence of unsupported tags or raw Markdown.",
+            "Malformed HTML that breaks parsing.",
+            "Embedded styling or script content."
+          ],
+          "scale": {
+            "type": "integer",
+            "min": 1,
+            "max": 5
+          }
+        }
+      ],
+      "json_schema": {
+        "type": "object",
+        "properties": {
+          "overall_score": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "dimensions": {
+            "type": "object",
+            "properties": {
+              "structure_compliance": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "guardrail_compliance": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "citation_compliance": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "highlight_and_markup_compliance": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "schema_and_allowed_tags_compliance": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              }
+            },
+            "required": [
+              "structure_compliance",
+              "guardrail_compliance",
+              "citation_compliance",
+              "highlight_and_markup_compliance",
+              "schema_and_allowed_tags_compliance"
+            ],
+            "additionalProperties": false
+          },
+          "comments": {
+            "type": "string",
+            "description": "Freeform evaluator notes about major failures or strengths."
+          }
+        },
+        "required": [
+          "overall_score",
+          "dimensions"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "brief_agent_content_quality",
+      "name": "Brief Agent Content Quality",
+      "description": "Evaluates semantic quality of the generated brief: accuracy, relevance, tone alignment, and usefulness, independent of strict structural compliance.",
+      "dimensions": [
+        {
+          "id": "factual_accuracy",
+          "label": "Factual Accuracy vs Inputs",
+          "description": "Degree to which statements match the initial customer brief, attachments, and Supporting Data without hallucination.",
+          "signals_positive": [
+            "Key facts (brand, objectives, deliverables, constraints) match the input sources.",
+            "No new factual claims are introduced without support.",
+            "Any recommendations beyond baseline are clearly marked and conservative."
+          ],
+          "signals_negative": [
+            "Incorrect or fabricated deadlines, volumes, or deliverables.",
+            "Attribution of requirements to Supporting Data when they do not exist in the sources.",
+            "Contradictions between brief content and cited sources."
+          ],
+          "scale": {
+            "type": "integer",
+            "min": 1,
+            "max": 5
+          }
+        },
+        {
+          "id": "relevance_and_focus",
+          "label": "Relevance & Focus",
+          "description": "Whether the brief stays on-topic and concentrates on the project archetype and scope implied by the initial request and referenced projects.",
+          "signals_positive": [
+            "Content focuses on the correct project type and channels.",
+            "No digressions into unrelated campaigns or brands.",
+            "Scope aligns with archetype_governance_rules (no silent expansions or removals)."
+          ],
+          "signals_negative": [
+            "Inclusion of clearly unrelated marketing ideas or off-topic recommendations.",
+            "Changing the fundamental objective or project type without justification.",
+            "Adding large new deliverable families without highlighting or clear basis."
+          ],
+          "scale": {
+            "type": "integer",
+            "min": 1,
+            "max": 5
+          }
+        },
+        {
+          "id": "tone_and_style_alignment",
+          "label": "Tone & Style Alignment",
+          "description": "Alignment with the Customer Tone of Voice & Writing Style specified in Supporting Data and implied by the user\u2019s initial brief.",
+          "signals_positive": [
+            "Language and phrasing match the customer\u2019s tone (e.g. formal vs casual).",
+            "Sections read like internal briefs used by the design team.",
+            "No excessive hedging or all-caps; respects capitalization and hedging rules where defined."
+          ],
+          "signals_negative": [
+            "Tone that clashes with the brand or previous briefs.",
+            "Overuse of all caps, exclamation marks, or slang where not appropriate.",
+            "Dry or robotic style when a more human-internal style is expected."
+          ],
+          "scale": {
+            "type": "integer",
+            "min": 1,
+            "max": 5
+          }
+        },
+        {
+          "id": "actionability_for_design_team",
+          "label": "Actionability for Design Team",
+          "description": "How well the brief enables a designer to start work without major clarification: clarity of objectives, audience, deliverables, and constraints.",
+          "signals_positive": [
+            "Objectives, audience, deliverables, and technical specs are concrete and unambiguous where information exists.",
+            "Gaps are clearly highlighted so designers know what to ask for.",
+            "Brief avoids vague, high-level statements when input provides specifics."
+          ],
+          "signals_negative": [
+            "Key fields are left vague even when source data is concrete.",
+            "Designers would need to re-read the original customer request to understand the task.",
+            "Important constraints (formats, channels, deadlines) are missing or unclear without being marked as gaps."
+          ],
+          "scale": {
+            "type": "integer",
+            "min": 1,
+            "max": 5
+          }
+        }
+      ],
+      "json_schema": {
+        "type": "object",
+        "properties": {
+          "overall_score": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "dimensions": {
+            "type": "object",
+            "properties": {
+              "factual_accuracy": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "relevance_and_focus": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "tone_and_style_alignment": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "actionability_for_design_team": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              }
+            },
+            "required": [
+              "factual_accuracy",
+              "relevance_and_focus",
+              "tone_and_style_alignment",
+              "actionability_for_design_team"
+            ],
+            "additionalProperties": false
+          },
+          "comments": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "overall_score",
+          "dimensions"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "id": "orthogonality_and_tier_compliance",
+      "name": "Orthogonality & Tier Compliance",
+      "description": "Evaluator rubric for checking whether a given system prompt respects the orthogonality pattern and matches its declared tier.",
+      "dimensions": [
+        {
+          "id": "task_purity",
+          "label": "Task Component Purity",
+          "description": "Does the Task block contain only WHAT (objective, acceptance criteria, output contract, rule-block references) and no HOW or rule syntax?",
+          "signals_positive": [
+            "Task contains clear objective, MUST/NEVER statements, and output contract.",
+            "No procedural steps, branching logic, or regex/syntax appear in Task.",
+            "Rule blocks are referenced only by stable names."
+          ],
+          "signals_negative": [
+            "Task includes numbered steps, if/else logic, or detailed parsing instructions.",
+            "Rule syntax (regex, JSON schema) embedded directly in Task.",
+            "Examples or large output samples inside Task."
+          ],
+          "scale": {
+            "type": "integer",
+            "min": 1,
+            "max": 5
+          }
+        },
+        {
+          "id": "plan_purity",
+          "label": "Execution Plan Component Purity",
+          "description": "Does the Execution Plan contain only HOW (steps, validation flows, branching) without embedding rule text, schemas, or tone instructions?",
+          "signals_positive": [
+            "Plan is expressed as ordered atomic steps with clear action_names.",
+            "Validation responsibilities (preflight, schema checks, numbering) are present where needed.",
+            "Plan refers to rule blocks by name for schemas, markup, and pricing."
+          ],
+          "signals_negative": [
+            "Plan repeats rule content or schemas that already live in rule blocks.",
+            "Plan contains examples or large sample outputs.",
+            "Tone, style, or formatting rules are written directly in the Plan."
+          ],
+          "scale": {
+            "type": "integer",
+            "min": 1,
+            "max": 5
+          }
+        },
+        {
+          "id": "rule_block_purity",
+          "label": "Rule Block Component Purity",
+          "description": "Do Rule Blocks restrict themselves to syntax, schemas, mappings, and minimal examples, without procedural validation steps or acceptance criteria?",
+          "signals_positive": [
+            "Rule blocks define schemas, markup rules, mappings, numbering, or regex constraints.",
+            "Only minimal examples are present, used purely to illustrate syntax.",
+            "No if/else logic, step ordering, or guardrail procedures appear in rule blocks."
+          ],
+          "signals_negative": [
+            "Rule blocks describe sequences of actions or validation procedures.",
+            "Task-like acceptance criteria (MUST/NEVER) embedded in rule blocks.",
+            "Large, full-length examples that really belong in docs or training data."
+          ],
+          "scale": {
+            "type": "integer",
+            "min": 1,
+            "max": 5
+          }
+        },
+        {
+          "id": "tier_match",
+          "label": "Tier Match to Requirements",
+          "description": "Whether the chosen tier (1/2/3) matches the actual complexity and determinism requirements of the agent.",
+          "signals_positive": [
+            "Tier 1 used only for low-risk, creative agents without strict schemas.",
+            "Tier 2 used for lightly structured agents with limited validation needs.",
+            "Tier 3 used when deterministic formats, schemas, and multi-step validation are required."
+          ],
+          "signals_negative": [
+            "Tier 1 used despite needing JSON or HTML schemas and validation.",
+            "Tier 2 used while relying heavily on rule blocks without separation.",
+            "Tier 3 over-specified for simple, exploratory agents with no schema."
+          ],
+          "scale": {
+            "type": "integer",
+            "min": 1,
+            "max": 5
+          }
+        }
+      ],
+      "json_schema": {
+        "type": "object",
+        "properties": {
+          "overall_score": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "dimensions": {
+            "type": "object",
+            "properties": {
+              "task_purity": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "plan_purity": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "rule_block_purity": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "tier_match": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              }
+            },
+            "required": [
+              "task_purity",
+              "plan_purity",
+              "rule_block_purity",
+              "tier_match"
+            ],
+            "additionalProperties": false
+          },
+          "comments": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "overall_score",
+          "dimensions"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ]
+}
+

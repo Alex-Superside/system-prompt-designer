@@ -1,0 +1,352 @@
+{
+  "rule_blocks": [
+    {
+      "name": "brand_guardrail_rules",
+      "description": "Defines hard brand/account scope boundaries for an agent: how to determine whether a request is in-scope for {{company_name}}, what rejection message to use when it is not, and optional topic scoping for allowed request types. This block is applied as the first step in the Execution Plan and ensures no downstream processing occurs if the guardrail fails.",
+      "suggested_filename": "brand_guardrail_rules.md",
+      "source_locations": [
+        {
+          "file": "_DOCS/breif-generator-prompt-26-02-2026.md",
+          "sections": [
+            "<guardrails> Brand Guardrail"
+          ]
+        },
+        {
+          "file": "_DOCS/Graph/14-Guardrail-System.md",
+          "sections": [
+            "Definition",
+            "Implementation in Brief-Writing-Agent",
+            "Guardrail Enforcement Rules"
+          ]
+        },
+        {
+          "file": "_DOCS/Graph/11-Brief-Writing-Agent.md",
+          "sections": [
+            "Rule Blocks (DETAILS)",
+            "Execution Plan – apply_brand_guardrail"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "context_source_mapping_rules",
+      "description": "Maps visible Supporting Data section headers to stable citation category labels (e.g. Creative Standards, Workflow Preferences, Recurrent Projects), defining how input markdown headings are normalized into a small, consistent set of provenance categories used in citations and structural decisions.",
+      "suggested_filename": "context_source_mapping_rules.md",
+      "source_locations": [
+        {
+          "file": "_DOCS/breif-generator-prompt-26-02-2026.md",
+          "sections": [
+            "<context_mapping_rules> Context Source Mapping Rules"
+          ]
+        },
+        {
+          "file": "_DOCS/Graph/13-Citation-System.md",
+          "sections": [
+            "Context Source Mapping Rules"
+          ]
+        },
+        {
+          "file": "_DOCS/Graph/11-Brief-Writing-Agent.md",
+          "sections": [
+            "Rule Blocks (DETAILS)",
+            "Context Source Mapping Rules"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "citation_formatting_rules",
+      "description": "Specifies the HTML markup that must be used to represent citations: a <mark> with data-type=\"citation\" (or equivalent) wrapping the cited text plus one or more <sup> elements carrying data-citation-id, data-id, data-type, data-title, and data-reasoning metadata. Includes rules for lists, hyperlinks, zero-nesting, and flattening of inner marks.",
+      "suggested_filename": "citation_formatting_rules.md",
+      "source_locations": [
+        {
+          "file": "_DOCS/breif-generator-prompt-26-02-2026.md",
+          "sections": [
+            "<citations_rules> Citation Formatting Rules"
+          ]
+        },
+        {
+          "file": "_DOCS/Graph/13-Citation-System.md",
+          "sections": [
+            "Citation Formatting Rules",
+            "Core Components – Citation Formatting Rules"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "citation_numbering_rules",
+      "description": "Defines how citation IDs and visual numbers are assigned and validated: sequential document-wide numbering (1, 2, 3, 4...), unique data-citation-id linkage between mark and superscripts, prohibition on renumber gaps or reuse, and constraints around the Citations section listing categories in numerical order.",
+      "suggested_filename": "citation_numbering_rules.md",
+      "source_locations": [
+        {
+          "file": "_DOCS/breif-generator-prompt-26-02-2026.md",
+          "sections": [
+            "Citation Formatting Rules – Global Sequential Numbering",
+            "Provenance & Trust Enforcement Rules"
+          ]
+        },
+        {
+          "file": "_DOCS/Graph/13-Citation-System.md",
+          "sections": [
+            "Citation Numbering Rules",
+            "Citations Section Format",
+            "Testing Citations"
+          ]
+        },
+        {
+          "file": "_DOCS/Graph/08-Validation-Discipline.md",
+          "sections": [
+            "Execution Plan Owns – Numbering and ID Integrity"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "citation_metadata_rules",
+      "description": "Specifies the semantics and constraints of citation metadata attributes such as data-id, data-type, data-title, and data-reasoning: how they map to Supporting Data contextItem IDs, allowed types (brand_brain vs initial_prompt), reasoning length and content requirements, and restrictions on punctuation and formatting inside attribute values.",
+      "suggested_filename": "citation_metadata_rules.md",
+      "source_locations": [
+        {
+          "file": "_DOCS/breif-generator-prompt-26-02-2026.md",
+          "sections": [
+            "Citation Formatting Rules – Metadata Attribute Definitions",
+            "Provenance Handling",
+            "Provenance & Trust Enforcement Rules"
+          ]
+        },
+        {
+          "file": "_DOCS/Graph/13-Citation-System.md",
+          "sections": [
+            "Core Components",
+            "Implementation in Brief-Writing-Agent",
+            "Common Mistakes – Missing metadata on superscript"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "citations_section_layout_rules",
+      "description": "Defines the optional trailing Citations section structure for agents that use a footer: its HTML skeleton (hr, heading, list of numbered category lines), ordering requirements, and the rule that only actually-used categories appear. For the current brief agent, this is mostly historical as inline-only provenance is preferred.",
+      "suggested_filename": "citations_section_layout_rules.md",
+      "source_locations": [
+        {
+          "file": "_DOCS/Graph/13-Citation-System.md",
+          "sections": [
+            "Citations Section Format"
+          ]
+        },
+        {
+          "file": "_DOCS/Graph/11-Brief-Writing-Agent.md",
+          "sections": [
+            "Output Example",
+            "Frontend receives"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "highlight_formatting_rules",
+      "description": "Defines how gaps, unverified information, and uncertain content are marked using <mark class=\"highlight\"> with appropriate data-type values (gap, citation, or default). It bans inline styles and Markdown ==...== syntax and provides canonical examples for GAP, TBD, and generic 'need to confirm' highlights.",
+      "suggested_filename": "highlight_formatting_rules.md",
+      "source_locations": [
+        {
+          "file": "_DOCS/breif-generator-prompt-26-02-2026.md",
+          "sections": [
+            "<highlight_rules> Highlight Formatting Rules"
+          ]
+        },
+        {
+          "file": "_DOCS/Graph/17-Markup-and-Highlighting.md",
+          "sections": [
+            "Rule Block: Highlight Formatting Rules"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "markup_system_rules",
+      "description": "General semantic HTML markup rules for mark-based annotations: allowed tags, required class and data-type attributes, constraints on overlapping types, and the separation of semantic markup from visual styling (delegating all CSS to the frontend). Encodes the one-type-per-mark rule and disallows inline styles or Markdown highlighting syntax.",
+      "suggested_filename": "markup_system_rules.md",
+      "source_locations": [
+        {
+          "file": "_DOCS/Graph/17-Markup-and-Highlighting.md",
+          "sections": [
+            "Markup & Highlighting System",
+            "HTML Markup Tags",
+            "Implementation Rules",
+            "Common Mistakes"
+          ]
+        },
+        {
+          "file": "_DOCS/breif-generator-prompt-26-02-2026.md",
+          "sections": [
+            "Highlight Formatting Rules – General Principles"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "brief_attachments_rules",
+      "description": "Defines how attached documents, PDFs, and other files referenced in the initial customer brief should be handled: when they must be opened, how their content participates in context, and the expectation that tools are used to read them before generating the final brief.",
+      "suggested_filename": "brief_attachments_rules.md",
+      "source_locations": [
+        {
+          "file": "_DOCS/breif-generator-prompt-26-02-2026.md",
+          "sections": [
+            "<brief_attachements_rules> Brief attachments"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "brief_html_structure_rules",
+      "description": "Defines the canonical internal brief structure (BRIEF vs SCOPE sections and their subsections) and how these map to HTML headings, paragraphs, and lists: required sections such as Problem Overview, Brand/Customer & Project Context, Target Audience, Creative Guidance, Deliverables, Volume, Timeline, Technical Specifications, Out of Scope, and Account resource files.",
+      "suggested_filename": "brief_html_structure_rules.md",
+      "source_locations": [
+        {
+          "file": "_DOCS/breif-generator-prompt-26-02-2026.md",
+          "sections": [
+            "<output> Output – Customer Brief Structure"
+          ]
+        },
+        {
+          "file": "_DOCS/Graph/11-Brief-Writing-Agent.md",
+          "sections": [
+            "Task (WHAT) – Output Contract",
+            "Frontend receives / renders"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "brief_allowed_html_tags_rules",
+      "description": "Restricts the set of HTML tags the brief-writing agent may emit (h1–h3, p, ul, li, mark, sup, br, hr) and clarifies that no other tags, inline styles, or Markdown should be present. This allows the frontend to rely on a constrained, predictable HTML subset.",
+      "suggested_filename": "brief_allowed_html_tags_rules.md",
+      "source_locations": [
+        {
+          "file": "_DOCS/breif-generator-prompt-26-02-2026.md",
+          "sections": [
+            "Task Overview – Ensure structural and content integrity"
+          ]
+        },
+        {
+          "file": "_DOCS/Graph/17-Markup-and-Highlighting.md",
+          "sections": [
+            "Core Principle – Markup is semantic, styling is frontend"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "archetype_governance_rules",
+      "description": "Captures non-procedural constraints for archetype and scope control in brief generation: how referenced projects anchor archetypes, what counts as baseline deliverables and objectives that cannot be removed, when additional deliverables may be introduced and must be highlighted, and how volume expansion and objective reframing are constrained.",
+      "suggested_filename": "archetype_governance_rules.md",
+      "source_locations": [
+        {
+          "file": "_DOCS/breif-generator-prompt-26-02-2026.md",
+          "sections": [
+            "Project Governance & Archetype Control"
+          ]
+        },
+        {
+          "file": "_DOCS/Graph/11-Brief-Writing-Agent.md",
+          "sections": [
+            "Execution Plan – identify_gaps / generate_brief_html / validate_scope_and_structure"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "json_schema_rules",
+      "description": "Defines JSON schema structures for agents that output JSON (e.g. quoting agents): required fields, allowed data types, nesting, and object/array layouts. The Execution Plan refers to these rules for schema validation, while the Task references them as the contract for valid output.",
+      "suggested_filename": "json_schema_rules.md",
+      "source_locations": [
+        {
+          "file": "_DOCS/Graph/05-Rule-Blocks-Component.md",
+          "sections": [
+            "Examples – JSON Schema Rules"
+          ]
+        },
+        {
+          "file": "_DOCS/Graph/12-Agent-Types.md",
+          "sections": [
+            "Quoting Agent – JSON Schema Rules"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "pricing_rules",
+      "description": "Holds the pricing and discount logic for quoting agents: how SKUs map to prices, rounding and currency conventions, which discounts are forbidden, and rules for never inferring unknown prices. The Task requires adherence to these rules; the Plan applies them.",
+      "suggested_filename": "pricing_rules.md",
+      "source_locations": [
+        {
+          "file": "_DOCS/Graph/12-Agent-Types.md",
+          "sections": [
+            "Quoting Agent – Rule Blocks – Pricing Rules"
+          ]
+        },
+        {
+          "file": "_DOCS/Graph/08-Validation-Discipline.md",
+          "sections": [
+            "Rule Blocks Define How – Pricing Rules"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "quantity_and_unit_rules",
+      "description": "Specifies valid quantity and unit combinations (e.g. hours, seats, units) and their validation constraints for quoting agents, ensuring that quantities are well-formed, non-negative, and consistent with each SKU or service type.",
+      "suggested_filename": "quantity_and_unit_rules.md",
+      "source_locations": [
+        {
+          "file": "_DOCS/Graph/12-Agent-Types.md",
+          "sections": [
+            "Quoting Agent – Quantity/Unit Rules"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "python_coding_rules",
+      "description": "Defines coding conventions for Python code agents: modular function-only design, imports at top, main entrypoint structure, no hard-coded paths, error-handling patterns, docstring requirements, and naming conventions such as load_*, transform_*, write_*.",
+      "suggested_filename": "python_coding_rules.md",
+      "source_locations": [
+        {
+          "file": "_DOCS/Graph/05-Rule-Blocks-Component.md",
+          "sections": [
+            "Examples – Python Naming Rules"
+          ]
+        },
+        {
+          "file": "_DOCS/Graph/12-Agent-Types.md",
+          "sections": [
+            "Python Code Agent – Rule Blocks – Python Coding Rules",
+            "ETL Naming Rules"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "sales_tone_rules",
+      "description": "Defines the tone and style for sales agents: friendly, consultative, never pushy, with constraints on hedging and prohibition on fabricated specs or prices. Task refers to this block by name; the Plan applies it when generating responses.",
+      "suggested_filename": "sales_tone_rules.md",
+      "source_locations": [
+        {
+          "file": "_DOCS/Graph/12-Agent-Types.md",
+          "sections": [
+            "Sales Agent – Rule Blocks – Sales Tone Rules"
+          ]
+        },
+        {
+          "file": "_DOCS/Graph/07-Placement-Router.md",
+          "sections": [
+            "Quick Reference Table – Tone belongs in Rule Blocks"
+          ]
+        }
+      ]
+    }
+  ]
+}
+

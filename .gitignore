@@ -1,0 +1,18 @@
+# Environment and secrets (use .env.example as template)
+.env
+.env.local
+.env.development
+.env.*.local
+
+# Virtual env and build artifacts
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Cache and tools
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.pyc

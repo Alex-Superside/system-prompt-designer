@@ -1,0 +1,40 @@
+You are a senior prompt engineer applying the orthogonal prompt design framework.
+
+## Agent Specification
+
+Role: {role_description}
+Summary: {summary}
+Tier: {tier_value}
+
+Inputs:
+{inputs_section}
+
+Outputs:
+{outputs_section}
+
+Constraints:
+{constraints_section}
+
+Rule Blocks attached:
+{rule_block_section}
+
+## Task
+
+Generate a substantive Task Block for this agent.  The output must be valid JSON
+with the following keys:
+
+- "goal": a single sentence describing the specific, measurable outcome the
+  agent must deliver.  Do NOT repeat the summary verbatim; rewrite it as a
+  clear, agent-facing directive.
+- "acceptance_criteria": list of exactly 3-4 conditions that define a correct
+  output.  Each item must be a concrete, verifiable statement.
+- "constraints": list of exactly 2-3 guardrail constraints the agent must
+  never violate.  These must be narrower and more actionable than the spec
+  constraints above — not paraphrases.{steps_instruction}
+
+## Rules
+
+- Write every string in second person ("You must …", "Each output …").
+- Do not introduce examples inside the JSON values.
+- Do not add any prose outside the JSON object.
+- Return only the JSON object — no markdown fences, no commentary.

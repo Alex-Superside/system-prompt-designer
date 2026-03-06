@@ -1,0 +1,153 @@
+---
+description: AI rules derived by SpecStory from the project AI interaction history
+applyTo: *
+---
+
+## PROJECT OVERVIEW
+
+This document outlines the rules, guidelines, and best practices for developing and maintaining AI-powered coding assistants. It covers code style, folder organization, tech stack, project-specific standards, workflow, release rules, reference examples, documentation, debugging, and a list of final dos and don'ts. This file serves as the single source of truth for all development activities related to the project.
+
+## CODE STYLE
+
+*   Adhere to the guidelines outlined in `python_best_practices_guide.md` (function ≤ 20 lines, no magic values, externalized templates, strong typing, dependency injection, etc.). This guide serves as the authoritative coding standard for the project.
+*   Secrets/API keys should be loaded from `.env` files in development (using `python-dotenv`) to keep them out of the repository. A `.env.example` file should be provided.
+
+## FOLDER ORGANIZATION
+
+*   Project code should reside in a dedicated subfolder (e.g., `prompt_framework` or `src/prompt_framework/`) within the main project directory.
+*   Prompts, evaluation datasets, and context pipelines must be stored in external files/directories (e.g., `ai_components/prompts/`, `ai_components/evals/`) to allow prompt designers and context engineers to work independently of code changes.
+*   Rule blocks should be stored in a dedicated directory (e.g., `rule_blocks/` or `ai_components/rule_blocks/`) as small, focused Markdown files.
+*   Recommended high-level project structure:
+    *   `prompt_design_system/` (or `src/prompt_design_system/`) - code
+    *   `ai_components/` - prompts, rule blocks, evals
+    *   `_DOCS/` - all design documents
+    *   `tests/` - tests
+    *   top-level `pyproject.toml`, `README.md`, `.gitignore`
+*   Consider storing pattern catalogs, such as `docs_pattern_catalog.json`, within the `ai_components/patterns/` directory.
+
+## TECH STACK
+
+*   Python (preferred development environment)
+*   OpenAI API
+*   Agents SDK (if applicable)
+*   uv (for dependency management)
+*   ruff (for linting and formatting)
+*   python-dotenv (for loading environment variables from `.env` files)
+*   Typer (for CLI)
+
+## PROJECT-SPECIFIC STANDARDS
+
+*   **Prompt Design Framework:** A systematic structure must be employed for every prompt, including rule blocks, flows, and an execution plan.
+*   **Agentic System:** The system should comprise autonomous agents and sub-agents.
+*   **Evaluator Agents:** The architecture should allow agents to act as evaluators, potentially using Anthropic and Google Gemini models.
+*   **Asynchronous Processing:** The system should process prompt design tasks asynchronously.
+*   **Rule Blocks:** Reusable, named rule blocks should be extracted from documentation (e.g., `_DOCS` and `Graph/*`) and stored as Markdown files under `ai_components/rule_blocks/`. Examples: `citation_rules.md`, `html_markup_rules.md`, `brief_structure_rules.md`, `guardrail_brand_vimeo.md`, `json_schema_brief.md`. Prompts should reference these blocks by name only. Rule blocks should be small and focused. The rule block templates are the `.md` files under `ai_components/rule_blocks/`. `rule_blocks.py` gets them from the path supplied by config (which is derived from the current working directory) and reads their content from disk at registry creation time. The directory used is `<cwd>/ai_components/rule_blocks`, where `<cwd>` is the current working directory when the app runs.
+*   **Design Patterns:** Design patterns should be implemented in Python under `prompt_design_system/patterns/` based on `_DOCS/Prompt_Design_Framework`, `prompt-TKDSL-workframe.prompt-design.md`, and existing system-prompt examples. Tiered patterns (e.g., `Tier1Pattern`, `Tier2Pattern`, `Tier3Pattern`) should take an `AgentSpec` and a set of `RuleBlock` names and produce a `PromptDesign` that respects the placement router. Agent-type patterns (e.g., `BriefWritingPattern`, `CodingAssistantPattern`) can be used to attach relevant rule blocks. A `PatternSelector` should choose the appropriate pattern based on tier and agent type.
+*   **Tiered Complexity Model:** Tier 1 patterns define only Task (objective, acceptance criteria, output contract) and are suited for creative, low-risk agents. Tier 2 adds a minimal Execution Plan for light structure and validation but keeps rule blocks to a minimum. Tier 3 fully separates Task, Plan, and Rule Blocks and is used when deterministic formats, schemas, guardrails, and multi-step validation are required; the brief-writing agent is a canonical Tier 3 example.
+*   **Phase 1 Skeleton Structure:** The initial Phase 1 skeleton should include:
+    *   Python package `prompt_framework` with subpackages `models`, `parsers`, `patterns`, `renderers`, `agents`, `providers`, `storage`.
+    *   Basic project metadata (`pyproject.toml` or `requirements.txt`, targeting Python 3.11+).
+    *   Minimal Pydantic (or dataclass) stubs for: `AgentSpec`, `PromptTier`, `TaskBlock`, `ExecutionPlanBlock`, `RuleBlock`, `PromptDesign`.
+    *   Typer-based CLI `promptctl` with:
+        *   `init-spec` that scaffolds a Markdown spec stub.
+        *   `design --spec path.md --tier [1|2|3] --dry-run` that just parses the spec, selects a tier, and prints the structured objects (no LLM yet).
+
+## WORKFLOW & RELEASE RULES
+
+*   **Multi-Agent Implementation:** The project can be implemented using a multi-agent setup, where each agent has a specific role and brief.
+    *   Example Agent Roles: Code Architect Agent, Domain Models & Parsers Agent, Patterns & Rule Blocks Agent, LLM Integration Agent, CLI & UX Agent.
+*   **Docs Mining Agent Squad:** A separate squad of agents can be used for extracting patterns from `_DOCS`.
+    *   Example Agent Roles: Docs Scanner Agent, Pattern Synthesizer Agent, Evaluation-Criteria Agent.
+*   **Parallel Execution:** Agents should run in parallel (e.g., separate Cursor agent sessions or external orchestrator).
+*   **Source of Truth:** Maintain a single source of truth for interfaces (architect agent).
+*   **Review/Merge Loop:** Implement a lightweight review/merge loop to reconcile agent outputs.
+*   **Cursor Agent Setup:** In Cursor, agents are implemented as separate conversations or presets, each with its own system prompt/rules, and run in parallel (multiple tabs) on the same repo.
+    *   Open a new Chat tab in Cursor for each agent.
+    *   Paste the corresponding system prompt as the first message (or into the “Custom instructions / System” section).
+    *   Pin or save that conversation for reuse.
+    *   Workflow Tip: Treat each chat like a separate teammate, always reminding it of its role and passing artifacts between chats by copy‑pasting.
+*   **Project Rules & Skills (Optional Persistent Setup):**
+    *   Put shared architecture rules (orthogonality, tier model) into project rules (`RULE.md`) so all agents respect them.
+    *   For recurring tasks like DocsPatternExtractor, turn its behavior into a Skill so any chat can “invoke” it in context.
+
+## REFERENCE EXAMPLES
+
+[Currently no reference examples defined]
+
+## PROJECT DOCUMENTATION & CONTEXT SYSTEM
+
+[Currently no project documentation & context system rules defined]
+
+## DEBUGGING
+
+*   When scaffolding a new spec file using `init_spec`, always ensure the error message is displayed to the user if the file already exists. Use `console.print()` to display the message before exiting.
+*   When validating the scenarios path, ensure an error message is displayed to the user if validation fails. Use `console.print()` to display the message before exiting.
+*   Ensure all necessary modules are imported at the top of the file, rather than using lazy imports within functions, unless there is a specific reason to do so (e.g., circular dependencies). For example, `ExecutionPlanBlock` should be imported at the top of `agents.py`.
+*   **`ModuleNotFoundError: No module named 'setuptools'`**: Add a `[build-system]` section to `pyproject.toml` so the build backend is declared and uv can install setuptools/wheel for the build:
+
+```toml
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+```
+
+*   **“Multiple top-level packages discovered”**: Limit package discovery to the real package with:
+
+```toml
+[tool.setuptools.packages.find]
+include = ["prompt_design_system*"]
+```
+
+so `ai_components` and `prompt_design_framework` are not built as part of this project.
+*   If experiencing unresolved import warnings in the IDE (e.g., for `typer` or `rich.console`), configure the IDE's Python interpreter path to point to the project's virtual environment (`.venv`). Create a `.vscode/settings.json` file with:
+```json
+{
+    "python.pythonPath": ".venv/bin/python"
+}
+```
+and a `pyrightconfig.json` file in the root of the project with:
+```json
+{
+  "venvPath": "."
+}
+```
+Alternatively, specify the absolute path to the virtual environment's Python executable in `pyrightconfig.json`:
+```json
+{
+  "venvPath": ".",
+  "pythonPath": "/path/to/your/project/.venv/bin/python"
+}
+```
+
+## FINAL DOs AND DON'Ts
+
+*   DO use `.env` files for managing environment variables, especially API keys, in development.
+*   DON'T commit `.env` files to the repository. Add them to `.gitignore`.
+*   **DO** create a virtual environment for each project using `python3 -m venv .venv` and activate it with `source .venv/bin/activate` (macOS/Linux) or `.venv\Scripts\activate.bat` (Windows cmd) or `.venv\Scripts\Activate.ps1` (Windows PowerShell). If using `uv`, use `uv venv .venv` to create the venv.
+*   **DO** add `.venv/` to your `.gitignore` file.
+*   **Understanding `--no-build-isolation`:** When using `uv pip install -e .` (or `pip install -e .`), build isolation is the default.
+    *   **With build isolation (default):** A temporary environment is created, and only the build dependencies from `[build-system] requires` (e.g., `setuptools`, `wheel`) are installed there. The package is built in that temporary environment, and the result is installed into your real environment. Your main venv never gets setuptools/wheel unless you install them yourself.
+    *   **With `--no-build-isolation`:** No temporary environment is created. The build runs in your current environment. The build backend (e.g., `setuptools`) and anything else the build uses must already be installed in that environment. This can be faster but requires managing build dependencies manually. If `setuptools` isn't present, you'll encounter a `ModuleNotFoundError`.
+    *   **When to use `--no-build-isolation`:**
+        *   Speed/reuse: Reuses existing `setuptools`/`wheel` instead of creating an isolated environment.
+        *   Build needs your env: Some packages' build scripts expect to see packages already in your environment.
+        *   Debugging: The build runs in the same environment as your shell, making it easier to reproduce and debug.
+        *   Old or custom workflows: Scripts/CI written when isolation wasn't default or when `setuptools` was always present.
+*   **Understanding `uv sync`:**
+    *   `uv sync` reads `pyproject.toml` and the lockfile (`uv.lock` if present).
+    *   It installs the project in **editable** mode.
+    *   It installs all locked dependencies.
+    *   It uses build isolation by default, so the setuptools error doesn’t happen.
+    *   To install dev tools (pytest, ruff, etc.): use `uv sync --all-extras` or `uv sync --extra dev`.
+
+*   **Shell Completion with Typer:** Typer automatically adds shell completion support via the `--install-completion` option. Running `promptctl --install-completion` sets up shell completion for the current shell (bash, zsh, fish, etc.). After running it (once per shell type), completion is enabled. When you type `promptctl ` and press Tab, the shell suggests available commands and options. To activate the completion in the current terminal, reload your shell configuration:
+    *   **Zsh (default on macOS):** `source ~/.zshrc`
+    *   **Bash:** `source ~/.bashrc` (or `source ~/.bash_profile` if you use that)
+    *   **Fish:** `source ~/.config/fish/config.fish`
+*   **Ensuring LLM Usage with OpenAI API:** The design command in `promptctl` only calls the OpenAI API when it can successfully create an LLM client. The LLM is skipped if:
+    1.  `OPENAI_API_KEY` is not set. The CLI loads `.env` and `.env.local` from the project root, so ensure the key is present in one of these files or exported in the shell.
+    2.  The `--no-llm` flag is passed.
+    3.  The `openai` package is not installed.
+*   **Understanding `ai_components` and Rule Block Locations:** The project uses two locations for rule blocks, but only one is active:
+    *   `ai_components/rule_blocks/`: This is the canonical location used by the app at runtime. Rule block templates (e.g., `citations.md`, `brief-json-schema.md`, `html-markup.md`) are stored here. The `RuleBlockRegistry` loads from this directory.
+    *   `prompt_design_system/rule_blocks/`: This directory contains extracted/reference rule blocks and an index, but it is not currently used by the app.
