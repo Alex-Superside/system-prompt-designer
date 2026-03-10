@@ -21,27 +21,34 @@ help:
 	@echo "Cleanup:"
 	@echo "  make clean            Remove cache/build files"
 	@echo ""
+	@echo "Passing Arguments:"
+	@echo "  make test ARGS=\"-k test_default\"         Run specific tests"
+	@echo "  make test-coverage ARGS=\"-v --tb=long\"   Tests with custom args"
+	@echo "  make design SPEC=my-spec.md ARGS=\"--model gpt-4o\""
+	@echo "  make lint ARGS=\"--fix\"                   Fix linting issues"
+	@echo "  make format ARGS=\"--line-length 100\""
+	@echo ""
 
 install:
 	uv pip install -e .
 
 test:
-	uv run --with pytest python3 -m pytest tests/ -v
+	uv run --with pytest python3 -m pytest tests/ -v $(ARGS)
 
 test-coverage:
-	uv run --with pytest --with pytest-cov python3 -m pytest tests/ --cov=prompt_design_system --cov-report=term
+	uv run --with pytest --with pytest-cov python3 -m pytest tests/ --cov=prompt_design_system --cov-report=term $(ARGS)
 
 design:
-	uv run promptctl design test-agent.agent-spec.md
+	uv run promptctl design $(SPEC) $(ARGS)
 
 run:
-	uv run promptctl --help
+	uv run promptctl $(ARGS)
 
 lint:
-	uv run ruff check prompt_design_system/
+	uv run ruff check prompt_design_system/ $(ARGS)
 
 format:
-	uv run ruff format prompt_design_system/
+	uv run ruff format prompt_design_system/ $(ARGS)
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} +
