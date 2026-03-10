@@ -60,11 +60,11 @@ Done in under 5 minutes per iteration.
 ```bash
 cd /Volumes/Dev_Projects/Superloop/_DOCS_RESEARCH_LEARNINGS
 
-# Install dependencies
-uv pip install -e . --no-build-isolation
+# Install dependencies with UV (recommended)
+uv sync
 
-# Or with pip:
-# pip install -e .
+# Or with Makefile:
+# make install
 ```
 
 ### Create Your First Agent
@@ -378,7 +378,7 @@ Run tests before each development session to ensure stability.
 ## Troubleshooting
 
 ### "ModuleNotFoundError: No module named 'typer'"
-Dependencies not installed. Run: `uv pip install -e .`
+Dependencies not installed. Run: `uv sync` or `make install`
 
 ### "OPENAI_API_KEY is not set"
 Set your API key in the environment or in a `.env` file (copy from `.env.example`). The app loads `.env` and `.env.local` from the current working directory when you run `promptctl`.

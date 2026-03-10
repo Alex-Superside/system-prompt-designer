@@ -11,8 +11,9 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from typing import Any
 
-from .config import LLMConfig, VerbosityLevel
+from .config import LLMConfig, ReasoningEffort, VerbosityLevel
 
 
 @dataclass(frozen=True)
@@ -25,12 +26,14 @@ class UsageMetadata:
 
 
 class OpenAIProvider:
-    """LLMClient implementation backed by the OpenAI Chat Completions API.
+    """LLMClient implementation backed by OpenAI APIs.
 
     The provider is intentionally thin: it owns authentication, model
     selection, and a single blocking HTTP round-trip.  All prompt composition
     stays in the caller (DesignAgent) so that this class has no awareness of
-    domain concepts.
+    domain concepts. GPT-5.x models use the Responses API so they can honor
+    reasoning effort and text verbosity. Older models remain on Chat
+    Completions for backward compatibility.
 
     Common model names (as of March 2026):
         gpt-5-mini      — default; cost-efficient reasoning with gpt-5 quality
@@ -51,29 +54,99 @@ class OpenAIProvider:
         self,
         api_key: str | None = None,
         model: str | None = None,
-        verbosity: VerbosityLevel | None = None,
+        reasoning_effort: ReasoningEffort | None = None,
+        text_verbosity: VerbosityLevel | None = None,
         llm_config: LLMConfig | None = None,
     ) -> None:
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         config = llm_config or LLMConfig.from_env()
         self.model = model or config.model
-        self.verbosity = verbosity or config.verbosity
+        self.reasoning_effort = reasoning_effort or config.reasoning_effort
+        self.text_verbosity = text_verbosity or config.text_verbosity
         self._config = config
 
-    def _get_api_params(self, effective_model: str) -> dict:
-        """Build API parameters, conditionally including reasoning_effort for gpt-5.x models."""
-        params = {
-            "model": effective_model,
-            "messages": [],  # Will be set by caller
-            "temperature": self._config.temperature,
-            "max_tokens": self._config.max_tokens,
-        }
+    @staticmethod
+    def _uses_responses_api(model_name: str) -> bool:
+        """Return True when the model should use the Responses API."""
+        return model_name.startswith("gpt-5")
 
-        # Add reasoning_effort only for gpt-5.x models
-        if effective_model.startswith("gpt-5"):
-            params["reasoning_effort"] = self.verbosity.value
+    def _create_responses_api_response(
+        self,
+        client: Any,
+        *,
+        effective_model: str,
+        input_value: str | list[dict[str, str]],
+    ) -> Any:
+        """Send a Responses API request for GPT-5 family models."""
+        if self.reasoning_effort == ReasoningEffort.NONE:
+            return client.responses.create(
+                model=effective_model,
+                input=input_value,
+                reasoning={"effort": self.reasoning_effort.value},
+                text={"verbosity": self.text_verbosity.value},
+                max_output_tokens=self._config.max_tokens,
+                temperature=self._config.temperature,
+            )
 
-        return params
+        return client.responses.create(
+            model=effective_model,
+            input=input_value,
+            reasoning={"effort": self.reasoning_effort.value},
+            text={"verbosity": self.text_verbosity.value},
+            max_output_tokens=self._config.max_tokens,
+        )
+
+    def _create_chat_completion_response(
+        self,
+        client: Any,
+        *,
+        effective_model: str,
+        messages: list[dict[str, str]],
+    ) -> Any:
+        """Send a Chat Completions request for legacy-compatible models."""
+        return client.chat.completions.create(
+            model=effective_model,
+            messages=messages,
+            temperature=self._config.temperature,
+            max_tokens=self._config.max_tokens,
+        )
+
+    @staticmethod
+    def _extract_response_text(response: object) -> str:
+        """Extract plain text from either API response shape."""
+        output_text = getattr(response, "output_text", None)
+        if isinstance(output_text, str):
+            return output_text
+
+        choices = getattr(response, "choices", None)
+        if choices:
+            return choices[0].message.content or ""
+
+        return ""
+
+    @staticmethod
+    def _build_usage_metadata(usage: object | None) -> UsageMetadata:
+        """Normalize token usage from either API surface."""
+        if usage is None:
+            return UsageMetadata(input_tokens=0, output_tokens=0, total_tokens=0)
+
+        input_tokens = getattr(usage, "input_tokens", None)
+        output_tokens = getattr(usage, "output_tokens", None)
+
+        if not isinstance(input_tokens, int):
+            input_tokens = getattr(usage, "prompt_tokens", 0)
+        if not isinstance(output_tokens, int):
+            output_tokens = getattr(usage, "completion_tokens", 0)
+
+        total_tokens = getattr(usage, "total_tokens", input_tokens + output_tokens)
+        if not isinstance(total_tokens, int):
+            total_tokens = input_tokens + output_tokens
+
+        return UsageMetadata(
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            total_tokens=total_tokens,
+        )
 
     def generate(self, prompt: str, *, model: str | None = None) -> str:
         """Send *prompt* to OpenAI and return the assistant's reply as a string.
@@ -95,13 +168,22 @@ class OpenAIProvider:
         client = OpenAI(api_key=self.api_key)
 
         try:
-            params = self._get_api_params(effective_model)
-            params["messages"] = [{"role": "user", "content": prompt}]
-            response = client.chat.completions.create(**params)
+            if self._uses_responses_api(effective_model):
+                response = self._create_responses_api_response(
+                    client,
+                    effective_model=effective_model,
+                    input_value=prompt,
+                )
+            else:
+                response = self._create_chat_completion_response(
+                    client,
+                    effective_model=effective_model,
+                    messages=[{"role": "user", "content": prompt}],
+                )
         except OpenAIError as exc:
             raise RuntimeError(f"OpenAI API call failed: {exc}") from exc
 
-        return response.choices[0].message.content or ""
+        return self._extract_response_text(response)
 
     def generate_with_system(
         self,
@@ -133,20 +215,27 @@ class OpenAIProvider:
         client = OpenAI(api_key=self.api_key)
 
         try:
-            params = self._get_api_params(effective_model)
-            params["messages"] = [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message},
-            ]
-            response = client.chat.completions.create(**params)
+            if self._uses_responses_api(effective_model):
+                response = self._create_responses_api_response(
+                    client,
+                    effective_model=effective_model,
+                    input_value=[
+                        {"role": "system", "type": "message", "content": system_prompt},
+                        {"role": "user", "type": "message", "content": user_message},
+                    ],
+                )
+            else:
+                response = self._create_chat_completion_response(
+                    client,
+                    effective_model=effective_model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_message},
+                    ],
+                )
         except OpenAIError as exc:
             raise RuntimeError(f"OpenAI API call failed: {exc}") from exc
 
-        text = response.choices[0].message.content or ""
-        usage = response.usage
-        metadata = UsageMetadata(
-            input_tokens=usage.prompt_tokens if usage else 0,
-            output_tokens=usage.completion_tokens if usage else 0,
-            total_tokens=usage.total_tokens if usage else 0,
-        )
+        text = self._extract_response_text(response)
+        metadata = self._build_usage_metadata(getattr(response, "usage", None))
         return text, metadata

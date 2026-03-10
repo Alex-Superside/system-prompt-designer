@@ -30,7 +30,7 @@ help:
 	@echo ""
 
 install:
-	uv pip install -e .
+	uv sync
 
 test:
 	uv run --with pytest python3 -m pytest tests/ -v $(ARGS)

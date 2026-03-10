@@ -46,7 +46,7 @@ def _load_env() -> None:
 _load_env()
 
 from .agents import DesignAgent, EvaluatorAgent, LinguisticAuditorAgent
-from .config import AppConfig, LLMConfig, VerbosityLevel
+from .config import AppConfig, LLMConfig, ReasoningEffort, VerbosityLevel
 from .models import (
     EvaluationReport,
     EvaluationScenario,
@@ -65,6 +65,39 @@ app = typer.Typer(help="Prompt design system CLI.")
 console = Console()
 
 FEEDBACK_PREVIEW_LENGTH = 60
+
+REASONING_EFFORT_VALUES = ", ".join(level.value for level in ReasoningEffort)
+TEXT_VERBOSITY_VALUES = ", ".join(level.value for level in VerbosityLevel)
+
+
+def _parse_reasoning_effort(value: str | None) -> ReasoningEffort | None:
+    """Parse a reasoning effort CLI option or exit with a user-friendly error."""
+    if value is None:
+        return None
+
+    try:
+        return ReasoningEffort(value)
+    except ValueError as exc:
+        console.print(
+            f"[red]Error:[/red] Invalid reasoning effort '{value}'. "
+            f"Must be one of: {REASONING_EFFORT_VALUES}"
+        )
+        raise typer.Exit(code=1) from exc
+
+
+def _parse_text_verbosity(value: str | None) -> VerbosityLevel | None:
+    """Parse a text verbosity CLI option or exit with a user-friendly error."""
+    if value is None:
+        return None
+
+    try:
+        return VerbosityLevel(value)
+    except ValueError as exc:
+        console.print(
+            f"[red]Error:[/red] Invalid output verbosity '{value}'. "
+            f"Must be one of: {TEXT_VERBOSITY_VALUES}"
+        )
+        raise typer.Exit(code=1) from exc
 
 
 @app.command("init-spec")
@@ -154,7 +187,12 @@ def design(
         None,
         "--verbosity",
         "-vb",
-        help="Reasoning effort level (low, medium, high) for gpt-5.x models.",
+        help="Reasoning effort level for gpt-5.x models.",
+    ),
+    output_verbosity: str | None = typer.Option(
+        None,
+        "--output-verbosity",
+        help="Output verbosity level for gpt-5.x Responses API calls.",
     ),
     output: Path | None = typer.Option(
         None,
@@ -180,20 +218,15 @@ def design(
 
     agent_spec = parse_agent_spec_from_markdown(spec_path)
 
-    # Parse and validate verbosity if provided
-    verbosity_level: VerbosityLevel | None = None
-    if verbosity:
-        try:
-            verbosity_level = VerbosityLevel(verbosity)
-        except ValueError:
-            console.print(
-                f"[red]Error:[/red] Invalid verbosity level '{verbosity}'. "
-                f"Must be one of: low, medium, high"
-            )
-            raise typer.Exit(code=1)
+    reasoning_effort = _parse_reasoning_effort(verbosity)
+    text_verbosity = _parse_text_verbosity(output_verbosity)
 
     llm_client = _resolve_llm_client(
-        use_llm=use_llm, verbose=verbose, model=model, verbosity=verbosity_level
+        use_llm=use_llm,
+        verbose=verbose,
+        model=model,
+        reasoning_effort=reasoning_effort,
+        text_verbosity=text_verbosity,
     )
     if use_llm and llm_client is None:
         console.print(
@@ -311,7 +344,12 @@ def refine(
         None,
         "--verbosity",
         "-vb",
-        help="Reasoning effort level (low, medium, high) for gpt-5.x models.",
+        help="Reasoning effort level for gpt-5.x models.",
+    ),
+    output_verbosity: str | None = typer.Option(
+        None,
+        "--output-verbosity",
+        help="Output verbosity level for gpt-5.x Responses API calls.",
     ),
 ) -> None:
     """Revise a saved design based on feedback and re-render its system prompt.
@@ -337,20 +375,15 @@ def refine(
         )
         raise typer.Exit(code=1) from exc
 
-    # Parse and validate verbosity if provided
-    verbosity_level: VerbosityLevel | None = None
-    if verbosity:
-        try:
-            verbosity_level = VerbosityLevel(verbosity)
-        except ValueError:
-            console.print(
-                f"[red]Error:[/red] Invalid verbosity level '{verbosity}'. "
-                f"Must be one of: low, medium, high"
-            )
-            raise typer.Exit(code=1)
+    reasoning_effort = _parse_reasoning_effort(verbosity)
+    text_verbosity = _parse_text_verbosity(output_verbosity)
 
     llm_client = _resolve_llm_client(
-        use_llm=True, verbose=verbose, model=model, verbosity=verbosity_level
+        use_llm=True,
+        verbose=verbose,
+        model=model,
+        reasoning_effort=reasoning_effort,
+        text_verbosity=text_verbosity,
     )
     if llm_client is None:
         console.print(
@@ -404,7 +437,12 @@ def audit(
         None,
         "--verbosity",
         "-vb",
-        help="Reasoning effort level (low, medium, high) for gpt-5.x models.",
+        help="Reasoning effort level for gpt-5.x models.",
+    ),
+    output_verbosity: str | None = typer.Option(
+        None,
+        "--output-verbosity",
+        help="Output verbosity level for gpt-5.x Responses API calls.",
     ),
 ) -> None:
     """Audit a saved design for linguistic noise and orthogonality leaks."""
@@ -417,20 +455,15 @@ def audit(
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(code=1) from exc
 
-    # Parse and validate verbosity if provided
-    verbosity_level: VerbosityLevel | None = None
-    if verbosity:
-        try:
-            verbosity_level = VerbosityLevel(verbosity)
-        except ValueError:
-            console.print(
-                f"[red]Error:[/red] Invalid verbosity level '{verbosity}'. "
-                f"Must be one of: low, medium, high"
-            )
-            raise typer.Exit(code=1)
+    reasoning_effort = _parse_reasoning_effort(verbosity)
+    text_verbosity = _parse_text_verbosity(output_verbosity)
 
     llm_client = _resolve_llm_client(
-        use_llm=True, verbose=verbose, model=model, verbosity=verbosity_level
+        use_llm=True,
+        verbose=verbose,
+        model=model,
+        reasoning_effort=reasoning_effort,
+        text_verbosity=text_verbosity,
     )
     if llm_client is None:
         console.print(
@@ -468,7 +501,12 @@ def run(
         None,
         "--verbosity",
         "-vb",
-        help="Reasoning effort level (low, medium, high) for gpt-5.x models.",
+        help="Reasoning effort level for gpt-5.x models.",
+    ),
+    output_verbosity: str | None = typer.Option(
+        None,
+        "--output-verbosity",
+        help="Output verbosity level for gpt-5.x Responses API calls.",
     ),
 ) -> None:
     """Test a saved system prompt by sending a user message to OpenAI.
@@ -495,20 +533,14 @@ def run(
 
     system_prompt = prompt_path.read_text(encoding="utf-8")
 
-    # Parse and validate verbosity if provided
-    verbosity_level: VerbosityLevel | None = None
-    if verbosity:
-        try:
-            verbosity_level = VerbosityLevel(verbosity)
-        except ValueError:
-            console.print(
-                f"[red]Error:[/red] Invalid verbosity level '{verbosity}'. "
-                f"Must be one of: low, medium, high"
-            )
-            raise typer.Exit(code=1)
+    reasoning_effort = _parse_reasoning_effort(verbosity)
+    text_verbosity = _parse_text_verbosity(output_verbosity)
 
     llm_client = _resolve_llm_client(
-        use_llm=True, model=model, verbosity=verbosity_level
+        use_llm=True,
+        model=model,
+        reasoning_effort=reasoning_effort,
+        text_verbosity=text_verbosity,
     )
     if llm_client is None:
         console.print(
@@ -547,7 +579,8 @@ def _resolve_llm_client(
     use_llm: bool,
     verbose: bool = False,
     model: str | None = None,
-    verbosity: VerbosityLevel | None = None,
+    reasoning_effort: ReasoningEffort | None = None,
+    text_verbosity: VerbosityLevel | None = None,
 ) -> OpenAIProvider | None:
     """Return an OpenAIProvider when possible, or None for heuristic-only mode.
 
@@ -560,23 +593,24 @@ def _resolve_llm_client(
         use_llm: Whether to use the LLM client or fallback to heuristic mode.
         verbose: Print detailed config checking information.
         model: Override the default model (e.g., "gpt-5.4", "gpt-4o").
-        verbosity: Override the default verbosity level (low/medium/high).
+        reasoning_effort: Override the default reasoning effort level.
+        text_verbosity: Override the default output verbosity level.
 
     When the key is absent a structured three-part message is printed (status,
     reason, how-to-fix) so the user knows exactly why the LLM was skipped and
     what to do about it.  Pass ``verbose=True`` to also print which config
     sources were checked.
 
-    Model and verbosity preferences are always resolved from config and CLI
-    flags regardless of whether the API key is present. This means the correct
-    model name is available in log messages and error context even when running
-    in heuristic mode.
+    Model, reasoning effort, and text verbosity preferences are always resolved
+    from config and CLI flags regardless of whether the API key is present.
+    This means the correct model name is available in log messages and error
+    context even when running in heuristic mode.
     """
     if not use_llm:
         return None
 
-    # Resolve LLMConfig from environment first so model/verbosity preferences
-    # are available for error messages even when the API key is absent.
+    # Resolve LLMConfig from environment first so model preferences are
+    # available for error messages even when the API key is absent.
     config = AppConfig.from_cwd()
     llm_config = config.llm if config.llm is not None else LLMConfig.from_env()
 
@@ -598,7 +632,8 @@ def _resolve_llm_client(
     return OpenAIProvider(
         api_key=api_key,
         model=model,
-        verbosity=verbosity,
+        reasoning_effort=reasoning_effort,
+        text_verbosity=text_verbosity,
         llm_config=llm_config,
     )
 

@@ -41,8 +41,18 @@ class AppPaths:
         return self.ai_components_dir / "evals"
 
 
+class ReasoningEffort(StrEnum):
+    """Supported reasoning effort levels for GPT-5 Responses API calls."""
+
+    NONE = "none"
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    XHIGH = "xhigh"
+
+
 class VerbosityLevel(StrEnum):
-    """Reasoning effort level for GPT-5.x models."""
+    """Supported output verbosity levels for GPT-5 Responses API calls."""
 
     LOW = "low"
     MEDIUM = "medium"
@@ -51,44 +61,66 @@ class VerbosityLevel(StrEnum):
 
 @dataclass(frozen=True)
 class LLMConfig:
-    """Centralized LLM API parameters (model, temperature, max_tokens, reasoning_effort)."""
+    """Centralized LLM API parameters and model-family defaults."""
+
+    GPT5_DEFAULT_MAX_TOKENS: ClassVar[int] = 1500
+    LEGACY_DEFAULT_MAX_TOKENS: ClassVar[int] = 2000
 
     model: str = "gpt-5-mini"
     temperature: float = 0.7
-    max_tokens: int = 1500
-    verbosity: VerbosityLevel = VerbosityLevel.MEDIUM
+    reasoning_effort: ReasoningEffort = ReasoningEffort.MEDIUM
+    text_verbosity: VerbosityLevel = VerbosityLevel.MEDIUM
+    max_tokens: int = GPT5_DEFAULT_MAX_TOKENS
+
+    @staticmethod
+    def get_max_tokens_for_model(model: str) -> int:
+        """Return a sensible default max token budget for the model family."""
+        if model.startswith("gpt-5"):
+            return LLMConfig.GPT5_DEFAULT_MAX_TOKENS
+        return LLMConfig.LEGACY_DEFAULT_MAX_TOKENS
 
     @classmethod
     def from_env(cls) -> LLMConfig:
         """Load overrides from environment when set."""
         model = os.getenv("OPENAI_MODEL", cls.model)
-        max_tokens_env = os.getenv("OPENAI_MAX_TOKENS")
-        if max_tokens_env:
-            max_tokens = int(max_tokens_env)
+        temperature = float(os.getenv("OPENAI_TEMPERATURE", cls.temperature))
+
+        max_tokens_str = os.getenv("OPENAI_MAX_TOKENS")
+        if max_tokens_str is not None:
+            max_tokens = int(max_tokens_str)
         else:
             max_tokens = cls.get_max_tokens_for_model(model)
 
-        verbosity_str = os.getenv("OPENAI_VERBOSITY", cls.verbosity.value)
+        reasoning_effort_str = os.getenv("OPENAI_REASONING_EFFORT")
+        if reasoning_effort_str is None:
+            reasoning_effort_str = os.getenv("OPENAI_VERBOSITY")
+
         try:
-            verbosity = VerbosityLevel(verbosity_str)
+            reasoning_effort = (
+                ReasoningEffort(reasoning_effort_str)
+                if reasoning_effort_str is not None
+                else ReasoningEffort.MEDIUM
+            )
         except ValueError:
-            verbosity = cls.verbosity
+            reasoning_effort = ReasoningEffort.MEDIUM
+
+        text_verbosity_str = os.getenv("OPENAI_TEXT_VERBOSITY")
+        try:
+            text_verbosity = (
+                VerbosityLevel(text_verbosity_str)
+                if text_verbosity_str is not None
+                else VerbosityLevel.MEDIUM
+            )
+        except ValueError:
+            text_verbosity = VerbosityLevel.MEDIUM
 
         return cls(
             model=model,
-            temperature=float(os.getenv("OPENAI_TEMPERATURE", cls.temperature)),
+            temperature=temperature,
+            reasoning_effort=reasoning_effort,
+            text_verbosity=text_verbosity,
             max_tokens=max_tokens,
-            verbosity=verbosity,
         )
-
-    @staticmethod
-    def get_max_tokens_for_model(model: str) -> int:
-        """Return model-specific max_tokens defaults."""
-        if model.startswith("gpt-5"):
-            return 1500
-        elif model.startswith("gpt-4"):
-            return 2000
-        return 2000
 
 
 @dataclass

@@ -8,7 +8,7 @@
 
 ## What Changed
 
-Phase 1 of the GPT-5.4 migration introduces model selection, reasoning effort control, and optimized token limits. All changes are **backward compatible**—existing designs and prompts work unchanged.
+Phase 1 of the GPT-5.4 migration now routes **GPT-5.x models through the Responses API** so the CLI can control both `reasoning.effort` and `text.verbosity` using official OpenAI request fields. Non-GPT-5 models remain on Chat Completions for backward compatibility.
 
 ### Summary of Changes
 
@@ -16,9 +16,10 @@ Phase 1 of the GPT-5.4 migration introduces model selection, reasoning effort co
 |-----------|--------|--------|
 | **Default Model** | `gpt-4o` → `gpt-5-mini` | Faster, cheaper reasoning |
 | **Default Max Tokens** | 2000 → 1500 | 25% token reduction for gpt-5.x |
-| **New Feature: Reasoning Effort** | Added `--verbosity [low\|medium\|high]` | Control model depth for gpt-5.x |
+| **New Feature: Reasoning Effort** | Added `--verbosity [none\|low\|medium\|high\|xhigh]` | Control GPT-5 reasoning depth |
+| **New Feature: Output Verbosity** | Added `--output-verbosity [low\|medium\|high]` | Control GPT-5 response length/detail |
 | **New Feature: Model Override** | Added `--model <name>` flag | Support gpt-5.4-pro, gpt-5-mini, etc. |
-| **Environment Variables** | Added OPENAI_VERBOSITY, updated OPENAI_MAX_TOKENS logic | Externalized defaults |
+| **Environment Variables** | Added `OPENAI_REASONING_EFFORT`, `OPENAI_TEXT_VERBOSITY`, kept `OPENAI_VERBOSITY` alias | Externalized defaults |
 
 ---
 
@@ -59,7 +60,10 @@ promptctl audit my-agent --model gpt-5.4-pro
 Use `--verbosity` to control reasoning depth for gpt-5.x models:
 
 ```bash
-# Fast reasoning (minimal)
+# Lowest-latency reasoning
+promptctl design spec.md --verbosity none
+
+# Fast reasoning
 promptctl design spec.md --verbosity low
 
 # Balanced reasoning (default)
@@ -67,6 +71,19 @@ promptctl design spec.md --verbosity medium
 
 # Deep reasoning (slower, better results)
 promptctl design spec.md --verbosity high
+
+# Maximum reasoning for difficult tasks
+promptctl design spec.md --verbosity xhigh
+```
+
+### New Flags: Output Verbosity (GPT-5.x Only)
+
+Use `--output-verbosity` to control how detailed the final response is:
+
+```bash
+promptctl design spec.md --output-verbosity low
+promptctl design spec.md --output-verbosity medium
+promptctl design spec.md --output-verbosity high
 ```
 
 ### Environment Configuration
@@ -78,6 +95,12 @@ Set defaults in `.env` or `.env.local`:
 OPENAI_MODEL=gpt-5.4-pro
 
 # Set default reasoning effort to high
+OPENAI_REASONING_EFFORT=high
+
+# Set default output verbosity to concise
+OPENAI_TEXT_VERBOSITY=low
+
+# Backward-compatible alias for reasoning effort
 OPENAI_VERBOSITY=high
 
 # Override max tokens (normally auto-selected by model)
@@ -87,7 +110,7 @@ OPENAI_MAX_TOKENS=2000
 **Load Order:**
 1. Command-line flags (highest priority)
 2. Environment variables
-3. Hardcoded defaults (gpt-5-mini, medium, 1500 tokens)
+3. Hardcoded defaults (gpt-5-mini, medium reasoning, medium output verbosity, 1500 tokens)
 
 ---
 
@@ -158,23 +181,25 @@ echo "OPENAI_MODEL=gpt-4o" >> .env
 ### Code Changes
 
 **`prompt_design_system/config.py`**
+- Added `ReasoningEffort` enum (`NONE`, `LOW`, `MEDIUM`, `HIGH`, `XHIGH`)
 - Added `VerbosityLevel` enum (`LOW`, `MEDIUM`, `HIGH`)
 - Updated `LLMConfig` defaults: model → gpt-5-mini, max_tokens → 1500
-- Added `verbosity` field to `LLMConfig`
+- Added `reasoning_effort` and `text_verbosity` fields to `LLMConfig`
 - Added `get_max_tokens_for_model()` helper for model-specific defaults
-- Enhanced `from_env()` to load verbosity and auto-select max_tokens
+- Enhanced `from_env()` to load reasoning effort, output verbosity, and auto-select max_tokens
 
 **`prompt_design_system/providers.py`**
-- Added `verbosity` parameter to `OpenAIProvider.__init__()`
-- Added `_get_api_params()` helper to conditionally include `reasoning_effort`
-- Updated both `generate()` and `generate_with_system()` to use new params
-- Reasoning effort applied only to gpt-5.x models; silently omitted for gpt-4.x
+- Added `reasoning_effort` and `text_verbosity` parameters to `OpenAIProvider.__init__()`
+- Routed GPT-5.x calls to `client.responses.create(...)`
+- Updated both `generate()` and `generate_with_system()` to normalize Responses API and Chat Completions responses
+- GPT-5.x now sends `reasoning={"effort": ...}` and `text={"verbosity": ...}`; gpt-4.x stays on Chat Completions
 
 **`prompt_design_system/cli.py`**
 - Added `--model` flag to design, refine, run, audit commands
 - Added `--verbosity` flag to design, refine, run, audit commands
-- Updated `_resolve_llm_client()` to accept and pass through model/verbosity
-- Added validation for verbosity values with helpful error messages
+- Added `--output-verbosity` flag to design, refine, run, audit commands
+- Updated `_resolve_llm_client()` to accept and pass through model, reasoning effort, and output verbosity
+- Added validation for reasoning effort and output verbosity values with helpful error messages
 
 ### Tests Added
 

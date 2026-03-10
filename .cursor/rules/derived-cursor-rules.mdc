@@ -151,3 +151,47 @@ Alternatively, specify the absolute path to the virtual environment's Python exe
 *   **Understanding `ai_components` and Rule Block Locations:** The project uses two locations for rule blocks, but only one is active:
     *   `ai_components/rule_blocks/`: This is the canonical location used by the app at runtime. Rule block templates (e.g., `citations.md`, `brief-json-schema.md`, `html-markup.md`) are stored here. The `RuleBlockRegistry` loads from this directory.
     *   `prompt_design_system/rule_blocks/`: This directory contains extracted/reference rule blocks and an index, but it is not currently used by the app.
+*   **Understanding the `evaluate` step:**
+    *   The `evaluate` command in `promptctl` allows evaluating a saved design against structured scenarios.
+    *   It loads the saved design and scenarios from a JSON file, creates an `EvaluatorAgent` (without an LLM), and generates an evaluation report.
+    *   The scenarios file format should be a JSON list of objects matching the `EvaluationScenario` model, including fields like `identifier`, `description`, `input_example` (optional), and `expected_properties` (a list of strings).
+    *   The `EvaluatorAgent` performs a rule-based evaluation by checking if the design's text contains the expected properties defined in the scenarios. It does not use an LLM or the `evaluation/rubrics.json` file.
+    *   The evaluation outcomes can be `PASS`, `FAIL`, or `SKIPPED` based on the presence of the expected properties in the design text.
+*   **Understanding Verbosity and Reasoning Effort with OpenAI API (GPT-5.x models):**
+    *   The OpenAI Response API (not Chat Completions) supports `verbosity` and `reasoning effort` parameters for GPT-5 family models (e.g., `gpt-5.2`, `gpt-5.4`).
+    *   `reasoning: { "effort": "<value>" }` controls the number of reasoning tokens generated. GPT-5.4 supports `none` (default), `low`, `medium`, `high`, and `xhigh`.
+    *   `text: { "verbosity": "<value>" }` influences the length of the model's output. Values are `"low"`, `"medium"` (default), and `"high"`.
+    *   These parameters are used with the Responses API endpoint (`POST https://api.openai.com/v1/responses`) and the `client.responses.create()` method.
+    *   Your current `providers.py` uses Chat Completions. To use verbosity and reasoning effort, you would need to switch to the Responses API.
+
+*   **Creating a Python virtual environment:**
+    *   From your project root:
+    ```bash
+    python3 -m venv .venv
+    ```
+    This creates a `.venv` folder with its own Python and `pip`.
+    *   Activate it:
+        *   **macOS/Linux (bash/zsh):**
+        ```bash
+        source .venv/bin/activate
+        ```
+        *   **Windows (cmd):**
+        ```cmd
+        .venv\Scripts\activate.bat
+        ```
+        *   **Windows (PowerShell):**
+        ```powershell
+        .venv\Scripts\Activate.ps1
+        ```
+    After activation, your prompt usually shows `(.venv)` and `python`/`pip` use that environment.
+    *   Optional: use `uv` (like this repo)
+        *   This project uses **uv**. To create and use a venv with uv:
+        ```bash
+        uv venv .venv
+        source .venv/bin/activate   # or .venv\Scripts\activate on Windows
+        ```
+        Then install dependencies with `uv pip install ...` or use `uv sync` if you have a `pyproject.toml`.
+    *   Ignore it in Git, add to `.gitignore`:
+    ```
+    .venv/
+    ```
